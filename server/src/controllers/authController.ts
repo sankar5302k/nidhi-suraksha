@@ -47,10 +47,12 @@ export async function loginHandler(req: Request, res: Response): Promise<void> {
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
-    // Return only the sanitized user profile (NO tokens in JSON body)
+    // Return user profile and tokens (enables Authorization: Bearer fallback for cross-origin production)
     res.status(200).json({
       message: 'Login successful',
-      user: result.user
+      user: result.user,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken
     });
   } catch (error) {
     if (error instanceof AuthenticationError) {
@@ -97,7 +99,9 @@ export async function refreshHandler(req: Request, res: Response): Promise<void>
 
     res.status(200).json({
       message: 'Session refreshed successfully',
-      user: result.user
+      user: result.user,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken
     });
   } catch (error) {
     // Clear cookies on invalid refresh token

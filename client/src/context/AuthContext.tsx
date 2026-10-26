@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthenticatedUser, UserRole } from '../types.js';
-import { apiRequest } from '../api/client.js';
+import { apiRequest, setStoredToken } from '../api/client.js';
 
 interface AuthContextType {
   user: AuthenticatedUser | null;
@@ -16,16 +16,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Verifies the session cookie with the server via /auth/me
+  // Verifies the session cookie or Bearer token with the server via /auth/me
   const refreshUser = async () => {
     try {
       const res = await apiRequest<{ user: AuthenticatedUser }>('/auth/me');
       if (res && res.user) {
         setUser(res.user);
       } else {
+        setStoredToken(null);
         setUser(null);
       }
     } catch {
+      setStoredToken(null);
       setUser(null);
     } finally {
       setLoading(false);
@@ -36,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshUser();
   }, []);
 
-  // Performs real cookie-based authentication via POST /auth/login with gateway validation
+  // Performs authentication via POST /auth/login with token storage and cookie fallback
   const login = async (email: string, pass: string, gatewayRole?: UserRole): Promise<AuthenticatedUser> => {
     const payload: { email: string; password: string; gatewayRole?: UserRole } = {
       email,
@@ -46,16 +48,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       payload.gatewayRole = gatewayRole;
     }
 
-    const res = await apiRequest<{ user: AuthenticatedUser }>('/auth/login', {
+    const res = await apiRequest<{ user: AuthenticatedUser; accessToken?: string }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(payload)
     });
+
+    if (res.accessToken) {
+      setStoredToken(res.accessToken);
+    }
+
     setUser(res.user);
     return res.user;
   };
 
-  // Clears the httpOnly session cookies via POST /auth/logout
+  // Clears the stored session token and cookies via POST /auth/logout
   const logout = async () => {
+    setStoredToken(null);
     try {
       await apiRequest('/auth/logout', { method: 'POST' });
     } catch {

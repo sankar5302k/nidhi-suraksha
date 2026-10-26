@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest, getFullApiUrl } from '../api/client.js';
+import { apiRequest, getFullApiUrl, getStoredToken } from '../api/client.js';
 import { FdrRecord, DocumentRecord, ExtractionRecord } from '../types.js';
 import { useAuth } from '../context/AuthContext.js';
 import { StatusBadge, VerificationBadge, RiskScoreBadge } from '../components/StatusBadge.js';
@@ -602,7 +602,7 @@ export const FdrDetailPage: React.FC = () => {
 
                         <div className="flex items-center gap-2">
                           <a
-                            href={getFullApiUrl(`/fdrs/${id}/documents/${doc.id || doc._id}`)}
+                            href={getFullApiUrl(`/fdrs/${id}/documents/${doc.id || doc._id}${getStoredToken() ? `?token=${encodeURIComponent(getStoredToken()!)}` : ''}`)}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors"

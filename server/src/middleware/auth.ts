@@ -6,11 +6,15 @@ import { AuthenticatedUser, UserRole } from '../types/auth.js';
 
 export async function authenticateToken(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    // 1. Extract token from httpOnly cookie or Authorization Bearer header
+    // 1. Extract token from httpOnly cookie, Authorization Bearer header, or query token param
     let token: string | undefined = req.cookies?.access_token;
 
     if (!token && req.headers.authorization?.startsWith('Bearer ')) {
       token = req.headers.authorization.slice(7).trim();
+    }
+
+    if (!token && typeof req.query?.token === 'string') {
+      token = req.query.token.trim();
     }
 
     if (!token) {

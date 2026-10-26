@@ -19,6 +19,28 @@ export function getFullApiUrl(endpoint: string): string {
   return `${API_BASE_URL}${cleanEndpoint}`;
 }
 
+const TOKEN_STORAGE_KEY = 'nidhi_suraksha_auth_token';
+
+export function getStoredToken(): string | null {
+  try {
+    return localStorage.getItem(TOKEN_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredToken(token: string | null): void {
+  try {
+    if (token) {
+      localStorage.setItem(TOKEN_STORAGE_KEY, token);
+    } else {
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+    }
+  } catch {
+    // Ignore storage errors in restricted contexts
+  }
+}
+
 export async function apiRequest<T = unknown>(
   endpoint: string,
   options: RequestInit = {}
@@ -29,11 +51,17 @@ export async function apiRequest<T = unknown>(
     headers.set('Content-Type', 'application/json');
   }
 
+  // Attach Bearer token (crucial for cross-origin deployments where third-party cookies are blocked)
+  const token = getStoredToken();
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
   const url = getFullApiUrl(endpoint);
   const response = await fetch(url, {
     ...options,
     headers,
-    credentials: 'include' // sends httpOnly cookies automatically (cross-site when sameSite: 'none')
+    credentials: 'include' // sends httpOnly cookies automatically where supported
   });
 
   if (response.status === 204) {
