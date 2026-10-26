@@ -5,7 +5,7 @@
 
 ---
 
-## 🏛️ Executive Summary
+## Executive Summary
 
 AICTE mandates that approved technical institutions (engineering colleges, polytechnics, management institutes) maintain mandatory security deposits in the form of **Fixed Deposit Receipts (FDRs)** with lien marked in favour of AICTE. These deposits guarantee regulatory compliance, faculty protections, and institutional stability.
 
@@ -13,13 +13,13 @@ Historically, tracking thousands of multi-crore fixed deposits across dozens of 
 
 **Nidhi Suraksha** ("Verify. Track. Release.") is an enterprise-grade, zero-trust, AI-assisted platform that manages the entire lifecycle of institutional security deposits:
 
-- 🛡️ **Verify:** AI-driven document OCR extraction via Groq (`openai/gpt-oss-120b`) with human-in-the-loop review, automated PII sanitization, prompt injection defense, and automated core banking (CBS) verification.
-- 📊 **Track:** Real-time escrow monitoring, explainable risk scoring (0–100), automated 90/60/30/7-day maturity alerts, and an interactive date advancement time-travel simulator.
-- ⚖️ **Release:** Statutory multi-tier release workflows with strict separation of duties, dual authorization, and an append-only cryptographic SHA-256 audit hash chain.
+- **Verify:** AI-driven document OCR extraction via Groq (`openai/gpt-oss-120b`) with human-in-the-loop review, automated PII sanitization, prompt injection defense, and automated core banking (CBS) verification.
+- **Track:** Real-time escrow monitoring, explainable risk scoring (0–100), automated 90/60/30/7-day maturity alerts, and an interactive date advancement time-travel simulator.
+- **Release:** Statutory multi-tier release workflows with strict separation of duties, dual authorization, and an append-only cryptographic SHA-256 audit hash chain.
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```
 +-----------------------------------------------------------------------------------------+
@@ -48,51 +48,51 @@ Historically, tracking thousands of multi-crore fixed deposits across dozens of 
 
 ---
 
-## 👥 Statutory User Roles & Access Control
+## Statutory User Roles & Access Control
 
 The platform provides dedicated gateways and role-based access control (RBAC) across 5 statutory tiers:
 
 | Statutory Role | Scope & Permissions | Security Level | Dedicated Gateway |
 | :--- | :--- | :--- | :--- |
-| **🏛️ Institution** | Register new FDRs, upload bank certificates, request deposit releases, track maturation | AAL1 | [`/login/institution`](http://localhost:5173/login/institution) |
-| **📋 Scrutiny Officer** | Inspect OCR extractions, verify bank lien endorsements, evaluate discrepancy flags | AAL2 | [`/login/scrutiny`](http://localhost:5173/login/scrutiny) |
-| **⚖️ Approving Authority** | Review recommended release requests, execute dual-authorization sanctions | AAL2 | [`/login/authority`](http://localhost:5173/login/authority) |
-| **🛡️ System Administrator**| Institution onboarding, user management, cryptographic health, AI budget quotas | AAL2 | [`/login/admin`](http://localhost:5173/login/admin) |
-| **🔍 Vigilance Auditor** | Independent oversight, verify SHA-256 Merkle chain integrity, audit forensics | AAL2 | [`/login/auditor`](http://localhost:5173/login/auditor) |
+| **Institution** | Register new FDRs, upload bank certificates, request deposit releases, track maturation | AAL1 | [`/login/institution`](http://localhost:5173/login/institution) |
+| **Scrutiny Officer** | Inspect OCR extractions, verify bank lien endorsements, evaluate discrepancy flags | AAL2 | [`/login/scrutiny`](http://localhost:5173/login/scrutiny) |
+| **Approving Authority** | Review recommended release requests, execute dual-authorization sanctions | AAL2 | [`/login/authority`](http://localhost:5173/login/authority) |
+| **System Administrator** | Institution onboarding, user management, cryptographic health, AI budget quotas | AAL2 | [`/login/admin`](http://localhost:5173/login/admin) |
+| **Vigilance Auditor** | Independent oversight, verify SHA-256 Merkle chain integrity, audit forensics | AAL2 | [`/login/auditor`](http://localhost:5173/login/auditor) |
 
-> ⚠️ **Security & Credential Hygiene:** Real secrets and credentials must reside exclusively in `.env`, which is included in `.gitignore`. The demo account list (`sample_accounts.txt`) is for local development only and must never be committed to source control or exposed in production environments.
+> **Security & Credential Hygiene:** Real secrets and credentials must reside exclusively in `.env`, which is included in `.gitignore`. The demo account list (`sample_accounts.txt`) is for local development only and must never be committed to source control or exposed in production environments.
 
-### 🛡️ Least-Privilege Role Visibility & Access Matrix
+### Least-Privilege Role Visibility & Access Matrix
 
-*Legend: ✅ Full Access | 👁 Read-Only | 🔒 Own Institution Only | ❌ Completely Hidden / Forbidden*
+*Legend: [Yes] Full Access | [Read] Read-Only | [Own] Own Institution Only | [No] Completely Hidden / Forbidden*
 
 | Page / Feature | Institution | Scrutiny Officer | Approving Authority | System Admin | Vigilance Auditor |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Login Gateway** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Dashboard** | 🔒 Simple (Own FDRs, expiring, actions) | ✅ Full + Scrutiny queue | ✅ Release-focused | ✅ System-focused | 👁 Full oversight |
-| **Bank Distribution & Portfolio Charts** | ❌ | ✅ | 👁 | 👁 | 👁 |
-| **Deposit Register (`/fdrs`)** | 🔒 Own FDRs | ✅ Full | 👁 | 👁 List only | 👁 |
-| **New FDR Wizard (`/fdrs/new`)** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **FDR Detail: Data & Documents** | 🔒 Own FDR & Docs | ✅ Full | 👁 | ❌ Documents | 👁 |
-| **Run CBS Bank Verification** | ❌ Result badge only | ✅ | ❌ | ❌ | ❌ |
-| **Flag Discrepancy / Observation** | ❌ | ✅ | ❌ | ❌ | ❌ |
-| **Risk Score Breakdown with Reasons** | ❌ Neutral message | ✅ | 👁 | ❌ | 👁 |
-| **Renew / Link Child FDR** | 🔒 | ❌ | ❌ | ❌ | ❌ |
-| **Time-Travel Date Simulator** | ❌ | ❌ | ❌ | ✅ Demo mode only | ❌ |
-| **Release: Request** | 🔒 | ❌ | ❌ | ❌ | ❌ |
-| **Release: Recommend (Tier 1)** | ❌ | ✅ | ❌ | ❌ | ❌ |
-| **Release: Approve / Reject (Tier 2)**| ❌ | ❌ | ✅ | ❌ | ❌ |
-| **Release: View Sanction Order** | 🔒 After approval | 👁 | ✅ | ❌ | 👁 |
-| **Reports & CSV Export** | ❌ | ✅ | ✅ | ✅ Aggregates | ✅ |
-| **Admin: User & Institution Management**| ❌ | ❌ | ❌ | ✅ | ❌ |
-| **Admin: Crypto Status, DB Health, AI Quota**| ❌ | ❌ | ❌ | ✅ | ❌ |
-| **Audit Hash-Chain Verifier & Log Viewer**| ❌ | ❌ Per-FDR only | ❌ Per-FDR only | ✅ | ✅ |
-| **Copilot: Portfolio Queries** | 🔒 Own FDRs only | ✅ | ✅ | ❌ | 👁 Queries only |
-| **Copilot: Draft Letters / Notices** | ❌ | ✅ | ✅ | ❌ | ❌ |
+| **Login Gateway** | [Yes] | [Yes] | [Yes] | [Yes] | [Yes] |
+| **Dashboard** | [Own] Simple (Own FDRs, expiring, actions) | [Yes] Full + Scrutiny queue | [Yes] Release-focused | [Yes] System-focused | [Read] Full oversight |
+| **Bank Distribution & Portfolio Charts** | [No] | [Yes] | [Read] | [Read] | [Read] |
+| **Deposit Register (`/fdrs`)** | [Own] Own FDRs | [Yes] Full | [Read] | [Read] List only | [Read] |
+| **New FDR Wizard (`/fdrs/new`)** | [Yes] | [No] | [No] | [No] | [No] |
+| **FDR Detail: Data & Documents** | [Own] Own FDR & Docs | [Yes] Full | [Read] | [No] Documents | [Read] |
+| **Run CBS Bank Verification** | [No] Result badge only | [Yes] | [No] | [No] | [No] |
+| **Flag Discrepancy / Observation** | [No] | [Yes] | [No] | [No] | [No] |
+| **Risk Score Breakdown with Reasons** | [No] Neutral message | [Yes] | [Read] | [No] | [Read] |
+| **Renew / Link Child FDR** | [Own] | [No] | [No] | [No] | [No] |
+| **Time-Travel Date Simulator** | [No] | [No] | [No] | [Yes] Demo mode only | [No] |
+| **Release: Request** | [Own] | [No] | [No] | [No] | [No] |
+| **Release: Recommend (Tier 1)** | [No] | [Yes] | [No] | [No] | [No] |
+| **Release: Approve / Reject (Tier 2)** | [No] | [No] | [Yes] | [No] | [No] |
+| **Release: View Sanction Order** | [Own] After approval | [Read] | [Yes] | [No] | [Read] |
+| **Reports & CSV Export** | [No] | [Yes] | [Yes] | [Yes] Aggregates | [Yes] |
+| **Admin: User & Institution Management** | [No] | [No] | [No] | [Yes] | [No] |
+| **Admin: Crypto Status, DB Health, AI Quota** | [No] | [No] | [No] | [Yes] | [No] |
+| **Audit Hash-Chain Verifier & Log Viewer** | [No] | [No] Per-FDR only | [No] Per-FDR only | [Yes] | [Yes] |
+| **Copilot: Portfolio Queries** | [Own] Own FDRs only | [Yes] | [Yes] | [No] | [Read] Queries only |
+| **Copilot: Draft Letters / Notices** | [No] | [Yes] | [Yes] | [No] | [No] |
 
 ---
 
-## 🖥️ Dashboards & Pages Overview
+## Dashboards & Pages Overview
 
 ### 1. Central Authentication Portal ([`/login`](http://localhost:5173/login) & `/login/:roleParam`)
 - **Gateway Selector:** 5 dedicated role gateways with distinct color-coded accents and security indicators.
@@ -100,7 +100,7 @@ The platform provides dedicated gateways and role-based access control (RBAC) ac
 - **Assurance Levels:** Privileged roles (Scrutiny Officer, Approving Authority, System Admin, Vigilance Auditor) require elevated AAL2 MFA assurance.
 
 ### 2. Executive Analytics Dashboard ([`/`](http://localhost:5173/))
-- **Escrow KPI Cards:** Total Escrow Portfolio Value (₹ Crores), Active Deposits, Expiring in 30/60/90 Days, Flagged Discrepancies.
+- **Escrow KPI Cards:** Total Escrow Portfolio Value (INR Crores), Active Deposits, Expiring in 30/60/90 Days, Flagged Discrepancies.
 - **Lifecycle Distribution Charts:** Interactive donut and bar charts showing FDRs across `ACTIVE`, `EXPIRING`, `MATURED`, `UNDER_SCRUTINY`, `RELEASED`, etc.
 - **Maturity Horizon:** 12-month forward projection chart of maturing funds.
 - **Bank Distribution Matrix:** Breakdown across State Bank of India, HDFC Bank, Punjab National Bank, ICICI Bank, Canara Bank, and Bank of Baroda.
@@ -150,7 +150,7 @@ The platform provides dedicated gateways and role-based access control (RBAC) ac
 
 ---
 
-## 🔒 Security Architecture & Cryptographic Controls
+## Security Architecture & Cryptographic Controls
 
 1. **Zero-Trust Multi-Tenancy & IDOR Defense:**
    - Database queries are scoped strictly to the authenticated user's `institutionId`.
@@ -170,7 +170,7 @@ The platform provides dedicated gateways and role-based access control (RBAC) ac
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 | Layer | Technologies |
 | :--- | :--- |
@@ -183,7 +183,7 @@ The platform provides dedicated gateways and role-based access control (RBAC) ac
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Node.js 20+
@@ -239,7 +239,7 @@ npm run dev
 
 ---
 
-## 🧪 Testing Suite
+## Testing Suite
 
 The server includes 55 comprehensive Vitest integration and security tests:
 ```bash
@@ -257,7 +257,7 @@ Tests cover:
 
 ---
 
-## 📂 Project Directory Structure
+## Project Directory Structure
 
 ```
 nidhi-suraksha/
