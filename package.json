@@ -1,0 +1,12 @@
+{
+  "name": "nidhi-suraksha",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Nidhi Suraksha - AI-assisted Security Deposit / FDR Management Portal for AICTE",
+  "scripts": {
+    "server": "npm --prefix server run dev",
+    "client": "npm --prefix client run dev",
+    "test:server": "npm --prefix server test",
+    "test": "npm run test:server"
+  }
+}

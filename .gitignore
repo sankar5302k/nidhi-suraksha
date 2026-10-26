@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Production builds
+dist/
+**/dist/
+build/
+**/build/
+
+# Environment files and credentials
+.env
+**/.env
+.env.local
+.env.*.local
+*.env
+server/.env
+client/.env
+!.env.example
+!**/.env.example
+
+# Logs and debugging
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# System & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.system_generated/
+scratch/

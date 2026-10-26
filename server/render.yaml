@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: nidhi-suraksha-backend
+    env: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_URL
+        value: https://your-frontend-app.vercel.app
+      - key: AUTO_SEED
+        value: "true"
+      - key: STORAGE_PROVIDER
+        value: gridfs
+      - key: LLM_PROVIDER
+        value: groq
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-120b
+      - key: GROQ_BASE_URL
+        value: https://api.groq.com
+      - key: AI_DAILY_BUDGET
+        value: "50"
+      - key: MONGODB_URI
+        sync: false
+      - key: ENCRYPTION_MASTER_KEY
+        sync: false
+      - key: HMAC_KEY
+        sync: false
+      - key: CSRF_SECRET
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false

@@ -1,0 +1,600 @@
+openapi: 3.0.3
+info:
+  title: Nidhi Suraksha API
+  description: |
+    API documentation for Nidhi Suraksha ("Verify. Track. Release."), an AI-assisted Security Deposit / Fixed Deposit Receipt (FDR) Management Portal for the AICTE Bureau of Regulation.
+    Features zero-trust multi-tenancy, envelope AES-256-GCM encryption, blind indexing, Document AI OCR via Groq, explainable risk scoring, multi-tier release workflows, and append-only cryptographic audit logging.
+  version: 1.0.0
+  contact:
+    name: AICTE Regulation Bureau Technical Architecture Team
+
+servers:
+  - url: http://localhost:5000
+    description: Local Express API Gateway
+
+security:
+  - CookieAuth: []
+  - BearerAuth: []
+
+paths:
+  /api/health:
+    get:
+      summary: Health check & brand verification
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  brand:
+                    type: string
+                    example: "Nidhi Suraksha"
+                  tagline:
+                    type: string
+                    example: "Verify. Track. Release."
+                  status:
+                    type: string
+                    example: "UP"
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /auth/login:
+    post:
+      summary: User authentication with Supabase and httpOnly session cookies
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Login successful with session cookie set
+        '401':
+          description: Invalid credentials
+        '429':
+          description: Account locked after 5 consecutive failed attempts
+
+  /auth/logout:
+    post:
+      summary: Clears session authentication cookies
+      responses:
+        '200':
+          description: Logged out successfully
+
+  /dashboard/summary:
+    get:
+      summary: Dashboard KPI metrics, status distribution, and risk aggregations
+      responses:
+        '200':
+          description: Summary metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardSummary'
+
+  /fdrs:
+    get:
+      summary: List FDR records scoped to authenticated tenant
+      responses:
+        '200':
+          description: Array of FDR records (raw encrypted FDR numbers omitted)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FdrRecord'
+    post:
+      summary: Create new FDR record in DRAFT status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFdrRequest'
+      responses:
+        '201':
+          description: FDR created successfully
+        '400':
+          description: Validation error or invalid foreign key
+        '409':
+          description: Duplicate FDR number for this bank
+
+  /fdrs/{id}:
+    get:
+      summary: Get FDR details with documents, extractions, and audit trail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: FDR record details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FdrDetail'
+        '404':
+          description: FDR not found or cross-tenant access denied (anti-IDOR)
+
+  /fdrs/{id}/submit:
+    post:
+      summary: Institution submits draft FDR for scrutiny
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: FDR submitted for scrutiny
+        '409':
+          description: Invalid lifecycle state transition
+
+  /fdrs/{id}/scrutiny:
+    post:
+      summary: Scrutiny Officer takes FDR under official review (MFA required)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Status updated to UNDER_SCRUTINY
+        '403':
+          description: MFA AAL2 required or insufficient role
+
+  /fdrs/{id}/verify:
+    post:
+      summary: Verify FDR against bank adapter (MFA AAL2 required)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bank verification result (VERIFIED, MISMATCH, or NOT_FOUND)
+
+  /fdrs/{id}/flag:
+    post:
+      summary: Scrutiny Officer flags a discrepancy on the FDR
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Discrepancy flagged and risk score updated
+
+  /fdrs/{id}/renew:
+    post:
+      summary: Submit renewal child FDR replacing expiring parent FDR
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFdrRequest'
+      responses:
+        '201':
+          description: Renewal child created and parent marked as RENEWED
+
+  /fdrs/{id}/release-request:
+    post:
+      summary: Institution initiates release workflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+      responses:
+        '201':
+          description: Release request initiated
+
+  /fdrs/{id}/documents:
+    post:
+      summary: Upload supporting document or scanned receipt (envelope encrypted)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                type:
+                  type: string
+                  enum: [FDR_SCAN, BANK_CONFIRMATION_LETTER, RENEWAL_ADVICE, RELEASE_APPLICATION]
+      responses:
+        '201':
+          description: Document uploaded and encrypted with AES-256-GCM data key
+
+  /fdrs/{id}/documents/{docId}:
+    get:
+      summary: Decrypt and stream document with attachment disposition
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: docId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Decrypted binary file stream
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+
+  /fdrs/{id}/documents/{docId}/extract:
+    post:
+      summary: Trigger Document AI pipeline (OCR, PII redaction, Groq/Mock extraction)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: docId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Structured extractions returned with confidence ratings
+
+  /fdrs/{id}/extractions/{extId}/confirm:
+    post:
+      summary: Scrutiny Officer explicitly confirms and signs AI extractions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: extId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Extractions confirmed
+
+  /release-requests:
+    get:
+      summary: List release requests scoped to user role
+      responses:
+        '200':
+          description: Array of release requests
+
+  /release-requests/{id}/process:
+    post:
+      summary: Scrutiny Officer recommends or rejects release (MFA required)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision:
+                  type: string
+                  enum: [RECOMMEND, REJECT]
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Request processed
+
+  /release-requests/{id}/decision:
+    post:
+      summary: Approving Authority approves or rejects release (Separation of duties enforced)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision:
+                  type: string
+                  enum: [APPROVE, REJECT]
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Final decision recorded; if approved, FDR is RELEASED
+        '403':
+          description: Separation of duties violation (approver cannot be processor)
+
+  /copilot/query:
+    post:
+      summary: Natural language search across authorized FDR portfolio
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [question]
+              properties:
+                question:
+                  type: string
+      responses:
+        '200':
+          description: Structured query results
+
+  /copilot/draft-notice/{id}:
+    post:
+      summary: Draft formal deficiency or reminder notice from case facts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Plain-text drafted notice for human review
+
+  /reports/export-csv:
+    get:
+      summary: Stream CSV report protected against formula injection
+      responses:
+        '200':
+          description: Sanitized CSV file stream
+          content:
+            text/csv:
+              schema:
+                type: string
+
+  /admin/simulate-date:
+    post:
+      summary: Advance systemic simulation date to evaluate upcoming maturities
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [targetDate]
+              properties:
+                targetDate:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Evaluation complete with reminder counts and state transitions
+
+  /audit/verify-chain:
+    get:
+      summary: Verify SHA-256 cryptographic hash chain of append-only audit log
+      responses:
+        '200':
+          description: Audit verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      valid:
+                        type: boolean
+                      totalLogsChecked:
+                        type: integer
+                      lastSequence:
+                        type: integer
+                      lastHash:
+                        type: string
+
+components:
+  securitySchemes:
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: ns_session
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    FdrRecord:
+      type: object
+      properties:
+        _id:
+          type: string
+        last4:
+          type: string
+          example: "8841"
+        bankName:
+          type: string
+          example: "State Bank of India"
+        branch:
+          type: string
+          example: "Connaught Place Branch"
+        amount:
+          type: number
+          example: 1500000
+        issueDate:
+          type: string
+          format: date
+        maturityDate:
+          type: string
+          format: date
+        lienInFavourOfAicte:
+          type: boolean
+        status:
+          type: string
+          enum: [DRAFT, SUBMITTED, UNDER_SCRUTINY, ACTIVE, EXPIRING, MATURED, RENEWED, RELEASE_REQUESTED, RELEASED, REJECTED]
+        verificationStatus:
+          type: string
+          enum: [SUBMITTED_UNVERIFIED, BANK_VERIFIED, VERIFICATION_FAILED, DISCREPANCY_FLAGGED]
+        riskScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        riskReasons:
+          type: array
+          items:
+            type: string
+
+    FdrDetail:
+      allOf:
+        - $ref: '#/components/schemas/FdrRecord'
+        - type: object
+          properties:
+            documents:
+              type: array
+              items:
+                type: object
+            extractions:
+              type: array
+              items:
+                type: object
+            auditLogs:
+              type: array
+              items:
+                type: object
+
+    CreateFdrRequest:
+      type: object
+      required: [fdrNumber, bankName, branch, amount, issueDate, maturityDate]
+      properties:
+        fdrNumber:
+          type: string
+          minLength: 5
+        bankName:
+          type: string
+        branch:
+          type: string
+        amount:
+          type: number
+        issueDate:
+          type: string
+          format: date
+        maturityDate:
+          type: string
+          format: date
+        lienInFavourOfAicte:
+          type: boolean
+          default: false
+        institutionId:
+          type: string
+          format: uuid
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalRecords:
+          type: integer
+        totalDepositAmount:
+          type: number
+        statusDistribution:
+          type: object
+          additionalProperties:
+            type: integer
+        highRiskCount:
+          type: integer
+        expiringWithin90Days:
+          type: integer
+        pendingScrutinyCount:
+          type: integer
+        releaseRequestedCount:
+          type: integer

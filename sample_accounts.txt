@@ -1,0 +1,89 @@
+================================================================================
+NIDHI SURAKSHA - "Verify. Track. Release."
+AICTE Institutional Security Deposit & FDR Management Portal
+SAMPLE USER CREDENTIALS & ROLE DIRECTORY
+================================================================================
+
+All credentials listed below are pre-configured in the local verification engine.
+Use these accounts to log in at: http://localhost:5173/login
+
+--------------------------------------------------------------------------------
+1. INSTITUTION PORTAL (College / University Representative)
+--------------------------------------------------------------------------------
+Portal Gateway  : http://localhost:5173/login/institution
+Official Name   : Dr. Rajiv Malhotra (Registrar)
+Institution     : Delhi Institute of Engineering & Technology
+User ID / Email : registrar@diet-delhi.ac.in
+Password        : Institute@123
+Security Level  : AAL1 (Standard Statutory Access)
+Capabilities    :
+  - Register new Fixed Deposit Receipts (FDRs)
+  - Upload bank receipts & renewal documents
+  - Initiate deposit release requests upon maturity
+  - Monitor bank verification & compliance status
+
+--------------------------------------------------------------------------------
+2. SCRUTINY OFFICER PORTAL (AICTE Verification Bureau)
+--------------------------------------------------------------------------------
+Portal Gateway  : http://localhost:5173/login/scrutiny
+Official Name   : Shri A. K. Sharma
+Designation     : AICTE Scrutiny Officer
+User ID / Email : scrutiny.officer@aicte.gov.in
+Password        : Officer@123
+Security Level  : AAL2 (Enhanced Regulatory MFA)
+Capabilities    :
+  - Verify bank lien endorsements in favour of AICTE
+  - Inspect OCR extractions & core banking confirmations
+  - Flag document discrepancies & risk anomalies
+  - Submit formal scrutiny reports to Approving Authority
+
+--------------------------------------------------------------------------------
+3. APPROVING AUTHORITY PORTAL (Statutory Sanction Authority)
+--------------------------------------------------------------------------------
+Portal Gateway  : http://localhost:5173/login/authority
+Official Name   : Prof. T. G. Sitharam
+Designation     : Member Secretary / Approving Authority
+User ID / Email : authority@aicte.gov.in
+Password        : Authority@123
+Security Level  : AAL2 (Executive Sanctions MFA)
+Capabilities    :
+  - Review release requests recommended by scrutiny officers
+  - Grant statutory approval or rejection for FDR releases
+  - Dual-authorization digital signing
+  - Enforce compliance hold periods & review executive risk scores
+
+--------------------------------------------------------------------------------
+4. SYSTEM ADMINISTRATOR PORTAL (AICTE IT & Cyber Defense Cell)
+--------------------------------------------------------------------------------
+Portal Gateway  : http://localhost:5173/login/admin
+Official Name   : System Administrator (AICTE Cell)
+Designation     : Central IT & Security Administrator
+User ID / Email : admin@aicte.gov.in
+Password        : Admin@123
+Security Level  : AAL2 (Root Security MFA)
+Capabilities    :
+  - Manage institution onboarding and user permissions
+  - Inspect system cryptographic health & envelope encryption
+  - Configure AI LLM quotas and system parameters
+  - Review system-wide security & rate-limit events
+
+--------------------------------------------------------------------------------
+5. VIGILANCE & COMPLIANCE AUDITOR PORTAL (Statutory Oversight)
+--------------------------------------------------------------------------------
+Portal Gateway  : http://localhost:5173/login/auditor
+Official Name   : Chief Vigilance Auditor
+Designation     : Statutory Oversight & Vigilance Officer
+User ID / Email : auditor@aicte.gov.in
+Password        : Auditor@123
+Security Level  : AAL1 (Independent Audit View)
+Capabilities    :
+  - Inspect the immutable SHA-256 Merkle hash chain
+  - Verify sequential tamper-evident audit log blocks
+  - Export cryptographic audit certificates & forensic reports
+  - Read-only regulatory oversight across all operations
+
+================================================================================
+UNIVERSAL BACKUP PASSWORD:
+In addition to the role-specific passwords above, the universal testing password
+"aicte@123" is accepted across all five accounts.
+================================================================================
